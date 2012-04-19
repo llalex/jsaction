@@ -10,12 +10,12 @@ jQuery(function($){
 	$("ul.ctrls").videoListChange();			// 3.一组循环
 	$("div.netShare").initNetShare();//分享
 	$(".mouseover").initMouseOver();
-	$(".joinlist-info").initMarquee(35, 1, ".joinlist-list", $(".joinlist-list li"), true);  // 类marquee循环
+	$(".joinlist-info").initMarquee(35, 1, ".joinlist-list", $(".joinlist-list li"), true);  // 4 类marquee循环
 	
-	$("ul.msg-opts").checkSelector("div.play-infolist", 'current');		// selector
-	$("ul.play-control").initSelector("div.play-list-b", 'fc');			// selector & scroll
+	$("ul.msg-opts").checkSelector("div.play-infolist", 'current');		// 5 selector
+	$("ul.play-control").initSelector("div.play-list-b", 'fc');			// 5 selector & scroll
 	
-	
+	$("#JoinBox").followBar();							// 固定fllowbar
 });
 
 jQuery.fn.extend({
@@ -452,7 +452,7 @@ jQuery.fn.extend({
 	 * @param {Boolean} isTop2bottom 是否上下滚动，默认左右滚动
      * @return JSoul
      */
-    initMarquee: function(itemWidth, groupSize, wrapSelector, itemSelector, isTopBottom){
+    initMarquee: function(itemWidth, groupSize, wrapSelector, itemSelector, isTopBottom, speed){
 		var main = this;
 		this.extend({
 			//单组宽度
@@ -463,6 +463,8 @@ jQuery.fn.extend({
 			items: itemSelector,
 			//滚动方式
 			method: isTopBottom ? "marginTop" : "marginLeft",
+			// 速度
+			speed: (speed == undefined) ? 1 : speed,
 			//初始化自己
 			initSelf: function(){
 				if(groupSize > this.items.length)return;
@@ -476,7 +478,12 @@ jQuery.fn.extend({
 						main.timeIntervarEvent(true);
 					}
 				});
-				this.initTimeIntervarEvent(50, 1, "marqueeInterval").timeIntervarEvent(true);
+				var methodnow = isTopBottom ? this.wrap.height() : this.wrap.width();
+				
+				// 小于高度时，不执行
+ 				if( this.totalWidth > methodnow){
+					this.initTimeIntervarEvent(50, main.speed, "marqueeInterval").timeIntervarEvent(true);	
+				}
 			},
 			start: 0,
 			marqueeInterval: function(){
@@ -631,6 +638,31 @@ jQuery.fn.extend({
 	
 });
 
+jQuery.fn.extend({
+	
+	followBar: function(options){
+		var defaults = {}
+		var options = jQuery.extend(defaults,options);
+		this.each(function(){
+			var obj = jQuery(this), t = obj.offset().top;
+			window.onscroll = function(){f(obj,t)};
+			window.onresize = function(){f(obj,t)};
+			
+			function f(obj,t){
+				var dst = jQuery(document).scrollTop();
+				if((jQuery.browser.msie == true) && (jQuery.browser.version == 6.0)){
+					if(dst > t) obj.css({position: "absolute", top: dst - t});
+				}else{
+					if(dst > t) obj.css({position: "fixed", top: "-" & dst + "px"});
+				}
+				if(dst <= t) obj.css({position: "static", top: 0});
+			}
+		});
+		
+	}
+	
+});
+
 /**
  * jQuery原型扩展方法 [延时方法类型]
  */
@@ -698,7 +730,10 @@ jQuery.fn.extend({
 		}
 		var _obj = this;
 		this.timeEventInterval = setInterval(function(){
-			_obj.timeIntervarCallback();
+			// 检测方法
+			if( _obj.timeIntervarCallback && (typeof(_obj.timeIntervarCallback) == 'function')){
+				_obj.timeIntervarCallback();
+			}
 		}, this.interval);
 		return this;
 	},

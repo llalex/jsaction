@@ -192,6 +192,14 @@ body { color: #666; }
 .p-video-weibo .weibo-user span { margin-left: 5px; }
 .p-video-weibo .weibo-user span.out a { color: #b201ff; }
 
+/* 6. 导航div fix显示*/
+#form_survey { width: 750px; height: 25px; position: absolute; top: 18px; left: 130px; }
+#form_survey .inpt { display: inline-block; width: 222px; height: 14px; line-height: 14px; padding: 2px; margin: 1px 0 0 80px; float: left; }
+#form_survey .btn { display: block; width: 100px; height: 25px; float: right; }
+#JoinBar { width: 920px; height: 60px; position: absolute; top: 203px; left: 50%; margin: 0 0 0 -460px; z-index: 1; }
+#JoinBox { width: 920px; height: 60px; line-height: 60px; overflow: hidden; }
+#JoinBg { background: url(http://mat1.gtimg.com/hb/house/hffc/val2011/AD/120406/jinqiao/join_bg.png) no-repeat center !important; _background: transparent; _filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='http://mat1.gtimg.com/hb/house/hffc/val2011/AD/120406/jinqiao/join_bg.png', sizingMethod='image'); width: 920px; height: 60px; position: absolute; top: -2px; left: 0; }
+
 /* 分页 */
 dl.pagination { height: 28px; line-height: 28px; color: #fff; clear: both; font-family: Microsoft Yahei, Tahoma, Geneva, sans-serif; text-align: center; }
 dl.pagination dd,dl.pagination span,dl.pagination dd a { border-radius: 5px; }

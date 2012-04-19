@@ -1,2 +1,7 @@
 jQuery常用的一些方法和一些使用实例
 jQuery is commonly used methods and some examples of
+
+4.19
+添加followBar() 导航固定方法
+
+修改initMarquee() 内容循环显示方法
