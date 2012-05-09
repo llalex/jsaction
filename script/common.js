@@ -6,7 +6,7 @@ jQuery(function($){
 	 
 	$("div.live-box h2").initHomeLive("div.live-box-list ul");  //排行榜
 	$("div.cooperImageList").initColScrollGroup();				// 一组组的循环
-	$("#cooperlist").cooperScroll($("#cooperlistitems"), false );	// 合作伙伴循环 一个个的循环
+	$("#cooperlist").cooperScroll($("#cooperlistitems"), $("#cooperlistitems ul"), $("#cooperlistitems ul li"), false, 2000, false );	// 合作伙伴循环
 	$("ul.ctrls").videoListChange();			// 3.一组循环
 	$("div.netShare").initNetShare();//分享
 	$(".mouseover").initMouseOver();
@@ -354,15 +354,35 @@ jQuery.fn.extend({
 		this.initSelf();
     	return this;
 	},
-	cooperScroll: function(items, auto, interval){
-			if( this.length < 0) { return this;}
+	/**
+     * 自动循环滚动效果
+	 * @param {Object} wrap外层包装项
+	 * @param {Object} itemslist 内包装整体项
+	 * @param {Object} items 内包装项搜索表达
+	 * @param {Boolean} auto 是否自动滚动
+	 * @param {Integer} interval 隔多久滚动一次
+	 * @param {Boolean} numCtrl 是否为默认左右控制项
+	 * @param {Object} ctrls 全部控制器对象
+     * @return jQuery 
+     */
+	cooperScroll: function(wrap, itemslist, items, auto, interval, numCtrl, ctrls){
+			if( this.length < 0 || itemslist.length < 0 ) { return this;}
+            
+            //注意内部的注释也属于一个元素，因此判断内部是否为空  应该使用小于等于1
+            if (items.length <= 1) {
+                return this;
+            }
 			var main = this;
+            if (numCtrl == undefined || numCtrl == false) {
+                ctrls = this.find('acronym a');
+            }
+           
 			this.extend({
-				listitems: items,
-				listitemsul: items.find('ul'),
-				listitem: items.find('ul li'),
-				ctrl: this.find('acronym a'),
-				itemwidth: items.attr('itemwidth'),
+				wrap: wrap,
+				itemslist: itemslist,
+				items: items,
+				ctrl: ctrls,
+				itemwidth: wrap.attr('itemwidth'),
 				timer0: null,
 				timer: null,
 				iSpeed: 0,
@@ -374,7 +394,7 @@ jQuery.fn.extend({
 						main.timer = setInterval(function(){main.doMove(iTarget)},30);
 					},
 				doMove: function(iTarget){
-						var itemsuld = main.listitemsul.get(0);
+						var itemsuld = main.itemslist.get(0);
 						
 						main.iSpeed = (iTarget - itemsuld.offsetLeft)/2; 
 						main.iSpeed = (main.iSpeed>0)?Math.ceil(main.iSpeed):Math.floor(main.iSpeed);
@@ -382,12 +402,16 @@ jQuery.fn.extend({
 						
 					},
 				toRun: function( oUl, oWrap, aLi){
-						//console.log( Math.abs(parseInt(oUl.offsetLeft)));
-						//console.log(oUl.offsetWidth-oWrap.width()-main.itemwidth);
-							
-						if(Math.abs(parseInt(oUl.offsetLeft)) > (oUl.offsetWidth-oWrap.width()-main.itemwidth)){
+						// offsetleft 大于 (offsetwidth - 容器宽度*2 - 单项宽度 ) 则main.iNow 为1
+						var width = oUl.offsetWidth-(oWrap.width()*2)-main.itemwidth;
+						// offset移动宽度小于main.items.length-1的全部的宽度，则取(main.items.length-1)*main.itemwidth的宽度
+						if( width < ((main.items.length-1) * main.itemwidth)){
+							width = ((main.items.length-1) * main.itemwidth);
+						}
+						
+						if(Math.abs(parseInt(oUl.offsetLeft)) > width){
 							oUl.style.left = (-main.itemwidth) + 'px';
-							main.iNow=1;
+							main.iNow= 1;
 						}
 						main.iNow ++;
 						main.startMove(-main.iNow*main.itemwidth);
@@ -395,31 +419,44 @@ jQuery.fn.extend({
 					
 				});
 			
-			main.listitemsul.css({ 'width': main.listitem.length*main.listitem[0].offsetWidth*2});
+			main.itemslist.css({ 'width': main.items.length*main.itemwidth*2});
 			
-			if(main.listitem.length*main.listitem[0].offsetWidth > main.listitems.get(0).offsetWidth){
+			if(main.items.length*main.itemwidth > main.wrap.eq(0).width()){
 					
-					var html = main.listitemsul.html();
-					main.listitemsul.html( html + html);
-				
-					var oLbtn = main.ctrl[0];
-					var oRbtn = main.ctrl[1];
-					var oUl = main.listitemsul.get(0);
-					var aLi = main.listitem;
-					jQuery(oLbtn).click( function(){
-						main.toRun(oUl, main.listitems, aLi);
-					});
+					var html = main.itemslist.html();
+					main.itemslist.html( html + html);
+                    if (main.ctrl.length == 2) { //如果等于2则只有上一个下一个按钮
+                        var oLbtn = main.ctrl[0];
+                        var oRbtn = main.ctrl[1];
+                        var oUl = main.itemslist.get(0);
+                        var aLi = main.items;
+                        jQuery(oRbtn).click( function(){
+                            main.toRun(oUl, main.wrap, aLi);
+                        });
+                        
+                        jQuery(oLbtn).click(
+                            function(){
+                                if(parseInt(oUl.offsetLeft)>=0){
+                                    oUl.style.left = -(aLi.length)*main.itemwidth + 'px';
+                                    main.iNow = aLi.length;
+                                }					
+                                main.iNow--;
+                                main.startMove(-main.iNow*main.itemwidth);
+                            }
+                        );
+                    } else { //一个控制对应一组图片
+                        main.ctrl.each(function (i) {
+                            jQuery(this).mouseover(
+                                function () {
+                                    //首先去除所有的current
+                                    main.ctrl.find("a").removeClass("current");
+                                    jQuery(this).find("a").addClass("current");
+                                    main.startMove(-i*main.itemwidth);
+                                }
+                            );
+                        });
+                    }
 					
-					jQuery(oRbtn).click(
-						function(){
-							if(parseInt(oUl.offsetLeft)>=0){
-								oUl.style.left = -(aLi.length)*main.itemwidth + 'px';
-								main.iNow = aLi.length;
-							}					
-							main.iNow--;
-							main.startMove(-main.iNow*main.itemwidth);
-						}
-					);
 					
 					if(main.auto == undefined ){
 						main.auto = true;	
@@ -428,13 +465,13 @@ jQuery.fn.extend({
 					
 					// 自动循环
 					if(main.auto && main.interval){
-						main.timer0 = setInterval(function(){ main.toRun(oUl, main.listitems, aLi)}, main.interval);
-						main.listitemsul.mouseover(function(){
+						main.timer0 = setInterval(function(){ main.toRun(oUl, main.wrap, aLi)}, main.interval);
+						main.itemslist.mouseover(function(){
 							clearInterval(main.timer0);
 						});
 		
-						main.listitemsul.mouseout(function(){
-							main.timer0 = setInterval( function(){ main.toRun( oUl, main.listitems, aLi)}, main.interval);
+						main.itemslist.mouseout(function(){
+							main.timer0 = setInterval( function(){ main.toRun( oUl, main.wrap, aLi)}, main.interval);
 						});
 					}
 	
